@@ -7,8 +7,6 @@ import jwt from 'jsonwebtoken'
 import { options } from '../constant.js'
 
 import uploadCloudinary from '../utils/cloudinary.js'
-import { use } from 'bcrypt/promises.js'
-import mongoose from 'mongoose'
 
 
 async function generateAccessAndRefreshToken(id) {
@@ -246,26 +244,35 @@ export const getUserWatchHistory = asyncHandler(async (req, res) => {
                 $match: { _id: req.user._id }
             },
             {
+                $addFields: {
+                    watchHistory: { $cond: { if: { $isArray: "$watchHistory" }, then: "$watchHistory", else: [] } }
+                }
+            },
+            {
                 $lookup: {
                     from: 'videos',
-                    let: { watchHistory: 'watchHistory' },
+                    let: { watchHistory: '$watchHistory' },
                     pipeline: [
                         {
                             $match: {
-                                $expr: { $in: ['$_id', "$$watchHistory"] }
+                                $expr: { $in: ['$_id', '$$watchHistory'] }
                             }
-                        },
-
+                        }
                     ],
                     as: 'watchHistory'
                 }
             },
             {
                 $project: {
-                    username: 1, fullName: 1, email: 1, watchHistory: 1
+                    username: 1,
+                    fullName: 1,
+                    email: 1,
+                    watchHistory: 1
                 }
             }
-        ])
+        ]);
+        
+        
 
         if (!watchHistory || watchHistory.length === 0) {
             throw new ApiError(404, "Watch History doesn't exist !!!");
