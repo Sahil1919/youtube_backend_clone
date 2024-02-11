@@ -11,7 +11,7 @@ export const getAllVideo = asyncHandler(async (req, res) => {
     page = Number(page)
     limit = Number(limit)
 
-    const baseQuery = {}
+    const baseQuery = { isPublished: true}
 
     if (query) {
         const regExp = new RegExp(query, 'i')
@@ -23,12 +23,18 @@ export const getAllVideo = asyncHandler(async (req, res) => {
 
     if (userId) baseQuery.owner = userId
 
+    const allowedSortOptions = ['uploadDate', 'views'];
+
+    if (sortBy && !allowedSortOptions.includes(sortBy)) {
+        throw new ApiError(403,`Invalid sortBy parameter. Allowed values are: ${allowedSortOptions.join(', ')}`);
+    }
+
     let sort = {};
         switch (sortBy) {
-            case 'uploadDate':
+            case allowedSortOptions[0]:
                 sort.createdAt = sortType === 'desc' ? -1 : 1;
                 break;
-            case 'viewCount':
+            case allowedSortOptions[1]:
                 sort.views = sortType === 'desc' ? -1 : 1;
                 break;
 
