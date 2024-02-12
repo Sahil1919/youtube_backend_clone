@@ -45,7 +45,14 @@ export const getAllVideo = asyncHandler(async (req, res) => {
             break;
     }
 
-    const videoList = await Video.find(baseQuery).sort(sort).skip((page - 1) * limit).limit(limit)
+    const videoList = await Video.find(baseQuery)
+        .sort(sort)
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .populate({
+            path: 'owner',
+            select: 'username fullName email'
+        })
 
     const totalCount = videoList.length
 
@@ -118,7 +125,7 @@ export const updateVideo = asyncHandler(async (req, res) => {
 
     if (!video) throw new ApiError(400, "Video Not found !!!")
 
-    if (loginUser.toString() !== video.owner.toString()) throw new ApiError(401, "Unauthorized Request!!!")
+    if (loginUser.toString() !== video.owner._id.toString()) throw new ApiError(401, "Unauthorized Request!!!")
 
     const { title, description } = req.body
 
@@ -153,7 +160,7 @@ export const deleteVideo = asyncHandler(async (req, res) => {
 
     if (!video) throw new ApiError(400, "Video Not found !!!")
 
-    if (loginUser.toString() !== video.owner.toString()) throw new ApiError(401, "Unauthorized Request !!!")
+    if (loginUser.toString() !== video.owner._id.toString()) throw new ApiError(401, "Unauthorized Request !!!")
 
     const isPreviousVideoDeleted = await deleteCloudinary(video.videoFile, 'video')
     const isPreviousThumbnailDeleted = await deleteCloudinary(video.thumbnail, 'image')
@@ -176,7 +183,7 @@ export const togglePublishStatus = asyncHandler(async (req, res) => {
 
     if (!video) throw new ApiError(400, "Video Not found !!!")
 
-    if (loginUser.toString() !== video.owner.toString()) throw new ApiError(401, "Unauthorized Request !!!")
+    if (loginUser.toString() !== video.owner._id.toString()) throw new ApiError(401, "Unauthorized Request !!!")
 
     video.isPublished = !video.isPublished
 
