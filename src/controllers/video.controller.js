@@ -110,6 +110,10 @@ export const getVideoById = asyncHandler(async (req, res) => {
 
     if (!video) throw new ApiError(400, "Video Not found !!!")
 
+    video.views += 1
+
+    video.save({ validateBeforeSave: false })
+
     return res.status(200)
         .json(new ApiSuccess(video, 'Video fetched Successfully !!!'))
 })
